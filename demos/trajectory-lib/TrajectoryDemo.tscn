@@ -50,7 +50,7 @@ tracks/0/enabled = true
 tracks/0/path = NodePath(".")
 tracks/0/interp = 1
 tracks/0/loop_wrap = true
-tracks/0/keys = PackedFloat32Array(0, 1, 0, 0, 0)
+tracks/0/keys = PackedFloat32Array(0, 1, 0, 1, -10)
 
 [sub_resource type="AnimationLibrary" id="AnimationLibrary_gj8g8"]
 _data = {
@@ -297,6 +297,7 @@ mesh = SubResource("5")
 skeleton = NodePath("../..")
 
 [node name="Target" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, -10)
 
 [node name="MeshInstance" type="MeshInstance3D" parent="Target"]
 mesh = SubResource("7")

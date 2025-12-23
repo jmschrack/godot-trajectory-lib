@@ -151,7 +151,7 @@ func reset_view(selected):
 	$Target.visible = false
 	$Target/CollisionShape.disabled = true
 	$Target.global_transform = target_default
-	$Target/AnimationPlayer.stop()
+	$Target/AnimationPlayer.stop(true)
 
 func _on_Range_view_up(state = true):
 	reset_view(Mode.RANGE)
