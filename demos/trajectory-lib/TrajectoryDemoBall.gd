@@ -1,9 +1,9 @@
-extends KinematicBody
+extends CharacterBody3D
 
 const LIFETIME = 5.0
 
-export var gravity = Vector3.ZERO
-export var velocity = Vector3.ZERO
+@export var gravity = Vector3.ZERO
+#@export var velocity = Vector3.ZERO
 
 var age = 0.0
 
@@ -14,5 +14,5 @@ func _physics_process(delta):
 	if move_and_collide(velocity * delta) or age >= LIFETIME:
 		queue_free()
 
-func get_shape() -> CollisionShape:
+func get_shape() -> Shape3D:
 	return $CollisionShape.shape

@@ -239,7 +239,7 @@ static func range(speed : float, gravity_magnitude : float, initial_height : flo
 	#	(2) y = initial_height + (speed * time * sin O) - (.5 * gravity*time*time)
 	#	(3) via quadratic: t = (speed*sin O)/gravity + sqrt(speed*speed*sin O + 2*gravity*initial_height)/gravity    [ignore smaller root]
 	#	(4) solution: range = x = (speed*cos O)/gravity * sqrt(speed*speed*sin O + 2*gravity*initial_height)    [plug t back into x=speed*time*cos O]
-	var angle : float = deg2rad(45.0) # no air resistence, so 45 degrees provides maximum range
+	var angle : float = deg_to_rad(45.0) # no air resistence, so 45 degrees provides maximum range
 	var a_cos : float = cos(angle)
 	var a_sin : float = sin(angle)
 
@@ -262,8 +262,8 @@ static func fixed_target(proj_pos : Vector3, proj_speed : float, target_pos : Ve
 
 	if gravity_dir != Vector3.DOWN:
 		gravity_basis = _gravity_basis(gravity_dir)
-		proj_pos = gravity_basis.xform_inv(proj_pos)
-		target_pos = gravity_basis.xform_inv(target_pos)
+		proj_pos =proj_pos* gravity_basis
+		target_pos =(target_pos)* gravity_basis
 
 	assert(proj_pos != target_pos and proj_speed > 0.0 and gravity_magnitude > 0.0, "fixed_target called with invalid data.");
 
@@ -328,8 +328,8 @@ static func fixed_target(proj_pos : Vector3, proj_speed : float, target_pos : Ve
 	# Make solutions global again
 	if gravity_dir != Vector3.DOWN:
 		for i in range(0, solutions.size()):
-			solutions[i].position = gravity_basis.xform(solutions[i].position)
-			solutions[i].velocity = gravity_basis.xform(solutions[i].velocity)
+			solutions[i].position = gravity_basis*(solutions[i].position)
+			solutions[i].velocity = gravity_basis*(solutions[i].velocity)
 	
 	return solutions
 
@@ -365,9 +365,9 @@ static func moving_target(proj_pos : Vector3, proj_speed : float, target_pos : V
 	
 	if gravity_dir != Vector3.DOWN:
 		gravity_basis = _gravity_basis(gravity_dir)
-		proj_pos = gravity_basis.xform_inv(proj_pos)
-		target_pos = gravity_basis.xform_inv(target_pos)
-		target_velocity = gravity_basis.xform_inv(target_velocity)
+		proj_pos = (proj_pos)*gravity_basis
+		target_pos = (target_pos)*gravity_basis
+		target_velocity = (target_velocity)*gravity_basis
 
 	# Derivation 
 	#
@@ -456,8 +456,8 @@ static func moving_target(proj_pos : Vector3, proj_speed : float, target_pos : V
 	# Make out parameters global again
 	if gravity_dir != Vector3.DOWN:
 		for i in range(0, solutions.size()):
-			solutions[i].velocity = gravity_basis.xform(solutions[i].velocity)
-			solutions[i].position = gravity_basis.xform(solutions[i].position)
+			solutions[i].velocity = gravity_basis*(solutions[i].velocity)
+			solutions[i].position = gravity_basis*(solutions[i].position)
 
 	return solutions
 
@@ -478,8 +478,8 @@ static func fixed_target_lateral_speed(proj_pos : Vector3, lateral_speed : float
 	
 	if gravity_dir != Vector3.DOWN:
 		gravity_basis = _gravity_basis(gravity_dir)
-		proj_pos = gravity_basis.xform_inv(proj_pos)
-		target_pos = gravity_basis.xform_inv(target_pos)
+		proj_pos =(proj_pos)* gravity_basis
+		target_pos = (target_pos)*gravity_basis
 	
 	assert(proj_pos != target_pos and lateral_speed > 0 and max_height > proj_pos.y, "fixed_target_lateral_speed called with invalid data.");
 
@@ -518,8 +518,8 @@ static func fixed_target_lateral_speed(proj_pos : Vector3, lateral_speed : float
 	
 	# Make solution global again
 	if gravity_dir != Vector3.DOWN:
-		solution.gravity = gravity_basis.xform(solution.gravity)
-		solution.velocity = gravity_basis.xform(solution.velocity)
+		solution.gravity = gravity_basis*(solution.gravity)
+		solution.velocity = gravity_basis*(solution.velocity)
 
 	return solution
 
@@ -539,9 +539,9 @@ static func moving_target_lateral_speed(proj_pos : Vector3, lateral_speed : floa
 	
 	if gravity_dir != Vector3.DOWN:
 		gravity_basis = _gravity_basis(gravity_dir)
-		proj_pos = gravity_basis.xform_inv(proj_pos)
-		target_pos = gravity_basis.xform_inv(target_pos)
-		target_velocity = gravity_basis.xform_inv(target_velocity)
+		proj_pos = (proj_pos)*gravity_basis
+		target_pos =(target_pos)* gravity_basis
+		target_velocity =(target_velocity)* gravity_basis
 	
 	assert(proj_pos != target_pos and lateral_speed > 0.0, "moving_target_lateral_speed called with invalid data.")
 
@@ -609,9 +609,9 @@ static func moving_target_lateral_speed(proj_pos : Vector3, lateral_speed : floa
 	
 	# Make solution global again
 	if gravity_dir != Vector3.DOWN:
-		solution.gravity = gravity_basis.xform(solution.gravity)
-		solution.position = gravity_basis.xform(solution.position)
-		solution.velocity = gravity_basis.xform(solution.velocity)
+		solution.gravity = gravity_basis*(solution.gravity)
+		solution.position = gravity_basis*(solution.position)
+		solution.velocity = gravity_basis*(solution.velocity)
 
 	return solution
 
@@ -754,12 +754,16 @@ static func velocity_at(time : float, velocity : Vector3, gravity : Vector3) -> 
 ## Returns the collision as a [Dictionary]; empty if the ray never hit anything.
 ## In addition to the normal collision info, the index of the colliding raycast
 ## is provided as well as "sample_index".
-static func ray_collision(space_state : PhysicsDirectSpaceState, samples : Array, collision_margin : float = 0.04, exclude : Array = [], collision_mask: int = 0x7FFFFFFF, collide_with_bodies : bool = true, collide_with_areas : bool = false) -> Dictionary:
+static func ray_collision(space_state : PhysicsDirectSpaceState3D, samples : Array, collision_margin : float = 0.04, exclude : Array = [], collision_mask: int = 0x7FFFFFFF, collide_with_bodies : bool = true, collide_with_areas : bool = false) -> Dictionary:
 	var num : int        = samples.size()
 	var col : Dictionary = {}
 	
 	assert(samples.size() > 1, "ray_collision: Sample size must be higher than one.")
-	
+	var params: PhysicsRayQueryParameters3D = PhysicsRayQueryParameters3D.create(samples[0].position,samples[1].position)
+	params.exclude=exclude
+	params.collision_mask=collision_mask
+	params.collide_with_bodies=collide_with_bodies
+	params.collide_with_areas=collide_with_areas
 	for i in range(0, num - 1):
 		var p = samples[i].position
 		var n = samples[i + 1].position
@@ -767,10 +771,12 @@ static func ray_collision(space_state : PhysicsDirectSpaceState, samples : Array
 		var dir = (n - p).normalized()
 		p += (-dir) * collision_margin
 		n += dir * collision_margin
+		params.from=p
+		params.to=n
 		
-		col = space_state.intersect_ray(p, n, exclude, collision_mask, collide_with_bodies, collide_with_areas)
+		col = space_state.intersect_ray(params)
 		
-		if not col.empty():
+		if not col.is_empty():
 			col["sample_index"] = i
 			break
 	
@@ -797,10 +803,10 @@ static func ray_collision(space_state : PhysicsDirectSpaceState, samples : Array
 ## collide_with_areas [bool]: Flag to indicate whether to test against physics areas
 ##
 ## Returns the collision point as a [Vector3], or null if no collision.
-static func shape_collision(space_state : PhysicsDirectSpaceState, shape : Shape, transform : Transform, velocity : Vector3, gravity : Vector3, collider_radius : float = 0.0, max_time : float = 10.0, time_step : float = 1.0 / ProjectSettings.get_setting("physics/common/physics_fps"), exclude : Array = [], collision_mask: int = 0x7FFFFFFF, collide_with_bodies : bool = true, collide_with_areas : bool = false, num_collisions : int = 1):
+static func shape_collision(space_state : PhysicsDirectSpaceState3D, shape : Shape3D, transform : Transform3D, velocity : Vector3, gravity : Vector3, collider_radius : float = 0.0, max_time : float = 10.0, time_step : float = 1.0 / ProjectSettings.get_setting("physics/common/physics_ticks_per_second"), exclude : Array = [], collision_mask: int = 0x7FFFFFFF, collide_with_bodies : bool = true, collide_with_areas : bool = false, num_collisions : int = 1):
 	assert(max_time > 0.0, "trajectory_shape_collision max_time must be a positive value.")
 
-	var params : PhysicsShapeQueryParameters = PhysicsShapeQueryParameters.new()
+	var params : PhysicsShapeQueryParameters3D = PhysicsShapeQueryParameters3D.new()
 	params.exclude = exclude
 	params.collision_mask = collision_mask
 	params.collide_with_bodies = collide_with_bodies
@@ -809,17 +815,20 @@ static func shape_collision(space_state : PhysicsDirectSpaceState, shape : Shape
 	params.set_transform(transform)
 	
 	var current = 0.0
+	var start_time=Time.get_ticks_usec()
 	var origin = transform.origin
 	
 	while current <= max_time:
 		transform.origin = origin
 		params.set_transform(transform)
-		var motion = space_state.cast_motion(params, velocity * time_step)
+		params.motion= velocity * time_step
+		var motion = space_state.cast_motion(params)
 
 		if motion[1] < 1.0:
 			return transform.origin + (velocity * time_step * motion[1]) + (velocity.normalized() * collider_radius)
 		
 		velocity += gravity * time_step
 		origin += velocity * time_step
+		current=(Time.get_ticks_usec()-start_time)*0.001
 	
 	return null
